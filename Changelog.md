@@ -26,6 +26,9 @@
 <details>
 <summary><strong> ✨ 新增功能 </strong></summary>
 
+**🖥️ Windows**
+
+- 新增 Mihomo Desk 便携预览版，支持托盘常驻、浏览器订阅管理、YAML 覆写和规则编辑
 
 </details>
 
