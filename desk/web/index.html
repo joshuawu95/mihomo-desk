@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mihomo Desk</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <aside>
+    <div class="brand"><span class="brand-icon">M</span><div>Mihomo Desk<small>浏览器管理 · 预览版 0.1</small></div></div>
+    <nav aria-label="管理导航">
+      <button data-tab="overview" class="selected">运行概览</button>
+      <button data-tab="profiles">订阅管理</button>
+      <button data-tab="overrides">YAML 覆写</button>
+      <button data-tab="rules">可视化规则</button>
+      <button data-tab="nodes">节点与测速</button>
+      <button data-tab="logs">日志与错误</button>
+    </nav>
+    <div class="sidebar-bottom"><span id="connection-dot" class="dot"></span><span id="connection">正在连接后台</span><small>关闭页面后，后台继续运行。</small></div>
+  </aside>
+  <main>
+    <header><div><div class="eyebrow">LOCAL WORKSPACE</div><h1 id="page-title">运行概览</h1></div><span class="badge">独立配置 · 无 WebView2</span></header>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <section id="overview" class="panel">
+      <div class="hero"><div class="eyebrow">MIHOMO CORE</div><h2 id="core-state">正在读取状态</h2><p>管理界面在浏览器里，代理运行在后台。</p><div class="actions"><button class="primary" data-core="start">启动内核</button><button data-core="restart">重启内核</button><button data-core="stop">停止内核</button></div></div>
+      <div class="stats"><article><small>当前订阅</small><strong id="active-name">默认直连</strong></article><article><small>本地代理端口</small><strong id="proxy-port">—</strong></article><article><small>内核版本</small><strong id="core-version">—</strong></article></div>
+      <article class="card"><h3>代理模式</h3><div class="segmented"><button data-mode="rule">规则</button><button data-mode="global">全局</button><button data-mode="direct">直连</button></div><p class="hint">模式切换直接作用于正在运行的 Mihomo。</p></article>
+      <article class="card row"><div><h3>Windows 系统代理</h3><p class="hint">默认关闭。开启会修改当前用户的系统代理；关闭或正常退出时恢复原设置。</p></div><button id="system-proxy">开启系统代理</button></article>
+      <article class="card"><h3>配置与运行</h3><p class="hint">草稿保存、内核校验、应用到运行配置是三个独立步骤。无效配置不会替换上一份可用配置。</p><code id="data-directory"></code><p id="last-error" class="error"></p></article>
+    </section>
+    <section id="profiles" class="panel" hidden>
+      <div class="section-intro"><p>原始订阅与个人覆写分开保存。更新订阅不会冲掉个人规则。</p></div>
+      <div class="columns"><article class="card"><h3>添加订阅</h3><form id="create-profile"><label>名称<input name="name" required placeholder="例如：日常订阅" maxlength="100"></label><label>订阅地址<input name="url" type="url" placeholder="https://…"></label><label>或导入 YAML 文件<input id="import-file" type="file" accept=".yaml,.yml,.txt"></label><label>或粘贴原始 YAML<textarea name="raw" rows="7" placeholder="proxies: []&#10;proxy-groups: []&#10;rules: [&#34;MATCH,DIRECT&#34;]"></textarea></label><button class="primary" type="submit">添加订阅</button></form></article><article class="card"><h3>我的订阅</h3><div id="profile-list"></div></article></div>
+      <article class="card"><h3>编辑订阅资料</h3><label>选择订阅<select class="profile-picker"></select></label><div class="columns"><label>名称<input id="profile-name" maxlength="100"></label><label>订阅地址<input id="profile-url" type="url"></label></div><details><summary>原始 YAML（更新时会替换此内容）</summary><textarea id="profile-raw" rows="12" spellcheck="false"></textarea></details><div class="actions"><button id="save-profile">保存资料</button><button id="update-profile">更新并应用订阅</button><button id="apply-profile" class="primary">切换并应用</button><button id="delete-profile" class="danger">删除订阅</button></div></article>
+    </section>
+    <section id="overrides" class="panel" hidden>
+      <p class="section-intro">合并顺序：原始订阅 → 全局 YAML → 订阅 YAML → 可视化规则。代理组和其他数组整体替换；DNS 子项及 hosts 按上游语义替换。</p>
+      <div class="columns"><article class="card"><h3>全局 YAML 覆写</h3><p class="hint">应用于所有订阅。</p><textarea id="global-yaml" rows="18" spellcheck="false" placeholder="dns:&#10;  nameserver: [1.1.1.1]"></textarea><button id="save-global">保存全局草稿</button></article><article class="card"><h3>订阅 YAML 覆写</h3><label>订阅<select class="profile-picker"></select></label><textarea id="profile-yaml" rows="15" spellcheck="false" placeholder="# Personal overrides"></textarea><button id="save-override">保存订阅草稿</button></article></div>
+      <article class="card"><div class="row"><h3>运行配置预览</h3><div class="actions"><button id="preview-config">生成预览</button><button data-validate>校验草稿</button><button data-apply class="primary">校验并应用</button></div></div><textarea id="runtime-preview" rows="12" readonly spellcheck="false" aria-label="生成的运行配置"></textarea><p class="hint">应用时会固定独立端口及本地控制接口，并关闭 TUN、额外监听和 DNS 监听。首版不支持脚本覆写及本地文件 provider。</p></article>
+    </section>
+    <section id="rules" class="panel" hidden>
+      <article class="card"><div class="columns"><label>订阅<select class="profile-picker"></select></label><label>规则插入方式<select id="rule-mode"><option value="prepend">前置到订阅规则前</option><option value="append">追加到 MATCH 前</option><option value="replace">替换全部订阅规则</option></select></label></div><p class="hint">顺序从上到下。MATCH 必须在最后；目标策略会在生成配置时校验。复杂逻辑规则可在 YAML 中编辑。</p><div class="table-wrap"><table><thead><tr><th>启用</th><th>类型</th><th>匹配值</th><th>目标策略</th><th>不解析</th><th>排序 / 删除</th></tr></thead><tbody id="rule-rows"></tbody></table></div><datalist id="policies"></datalist><div class="actions"><button id="add-rule">＋ 添加规则</button><button id="save-rules">保存规则草稿</button><button data-validate>校验草稿</button><button data-apply class="primary">校验并应用</button></div></article>
+      <article class="card"><h3>使用提示</h3><p class="hint">保存后再校验或应用。订阅级规则独立保存，远程订阅更新后会自动参与配置生成。要替换订阅内的单条规则，可在 YAML 中整体替换 rules，或使用这里的“替换全部”方式。</p></article>
+    </section>
+    <section id="nodes" class="panel" hidden><div class="row section-intro"><p>从 Mihomo 读取真实策略组、节点和当前选择。</p><button id="refresh-nodes">刷新节点</button></div><div id="node-groups"></div></section>
+    <section id="logs" class="panel" hidden><article class="card"><h3>后台与内核日志</h3><p class="hint">最近 400 条。页面每 3 秒读取后台状态。</p><pre id="log-output"></pre></article></section>
+    <footer>Mihomo Desk · 基于 Clash Verge Rev · GPL-3.0-only <a href="https://github.com/joshuawu95/mihomo-desk" target="_blank" rel="noreferrer">项目源码 ↗</a></footer>
+  </main>
+</body>
+</html>
