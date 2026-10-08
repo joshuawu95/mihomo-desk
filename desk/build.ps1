@@ -52,7 +52,7 @@ try {
         coreArchiveSha256 = (Get-FileHash -LiteralPath $coreZip -Algorithm SHA256).Hash
         sourceCommit = (& git rev-parse HEAD)
         sourceDirty = [bool](& git status --porcelain --untracked-files=normal)
-        files = @(Get-ChildItem -LiteralPath $outputRoot -Recurse -File | ForEach-Object {
+        files = @(Get-ChildItem -LiteralPath $outputRoot -Recurse -File | Where-Object { $_.FullName -ne (Join-Path $outputRoot 'build-manifest.json') } | ForEach-Object {
             [ordered]@{ path = $_.FullName.Substring($outputRoot.Length + 1); sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }
         })
     }
